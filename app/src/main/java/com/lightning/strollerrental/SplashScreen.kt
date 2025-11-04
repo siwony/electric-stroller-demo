@@ -5,17 +5,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun ReturningScreen(currentStep: Int) {
-    val stepTexts = listOf(
-        "유모차와 연결 중...",
-        "유모차 상태 확인 중...",
-        "잠금 장치 잠그는 중...",
-        "반납 완료!"
-    )
-
+fun SplashScreen(onStart: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -24,29 +18,28 @@ fun ReturningScreen(currentStep: Int) {
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "반납 중",
+            text = "전기 유모차 대여",
             style = MaterialTheme.typography.headlineLarge
         )
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        CircularProgressIndicator(
-            modifier = Modifier.size(64.dp)
-        )
-
-        Spacer(modifier = Modifier.height(32.dp))
-
         Text(
-            text = stepTexts.getOrNull(currentStep) ?: "",
-            style = MaterialTheme.typography.titleLarge
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text(
-            text = "Step ${currentStep + 1} / 4",
-            style = MaterialTheme.typography.bodyMedium,
+            text = "데모용으로 권한 없이 진행됩니다",
+            style = MaterialTheme.typography.bodyLarge,
+            textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+
+        Spacer(modifier = Modifier.height(48.dp))
+
+        Button(
+            onClick = onStart,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
+        ) {
+            Text("시작하기", style = MaterialTheme.typography.titleMedium)
+        }
     }
 }
