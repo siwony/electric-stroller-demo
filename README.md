@@ -1,5 +1,5 @@
-# lightning-electric-stroller-demo
-라이트닝동아리 전기유모차 데모앱
+# electric-stroller-demo
+전기유모차 데모앱
 
 ## Overview
 This is a Kotlin Android app using Jetpack Compose & Navigation that implements a stroller rental flow with 4 screens.
