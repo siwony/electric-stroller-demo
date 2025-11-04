@@ -16,11 +16,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Generate code via Copilot API
-        uses: github/copilot-actions@v1
-        with:
-          prompt: "Implement the features from feature.md and require.md."
-          output: "src/generated" # 코드를 'src/generated'에 생성
+      # - name: Generate code via Copilot API
+      #   uses: github/copilot-actions@v1
+      #   with:
+      #     prompt: "Implement the features from feature.md and require.md."
+      #     output: "src/generated" # 코드를 'src/generated'에 생성
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v6
