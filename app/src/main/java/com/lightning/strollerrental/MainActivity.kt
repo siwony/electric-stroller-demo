@@ -2,13 +2,18 @@ package com.lightning.strollerrental
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
@@ -42,6 +47,9 @@ fun StrollerRentalApp() {
         startDestination = if (uiState.showSplash) "splash" else "home"
     ) {
         composable("splash") {
+            LaunchedEffect(Unit) {
+                DemoLogger.logScreenView("splash")
+            }
             SplashScreen(
                 onStart = {
                     viewModel.dismissSplash()
@@ -53,6 +61,9 @@ fun StrollerRentalApp() {
         }
 
         composable("home") {
+            LaunchedEffect(Unit) {
+                DemoLogger.logScreenView("home")
+            }
             HomeScreen(
                 uiState = uiState,
                 onStartRenting = {
@@ -79,7 +90,31 @@ fun StrollerRentalApp() {
         }
 
         composable("renting") {
+            LaunchedEffect(Unit) {
+                DemoLogger.logScreenView("renting")
+            }
+            var showCancelDialog by remember { mutableStateOf(false) }
+            
+            // Handle back button during renting
+            BackHandler {
+                showCancelDialog = true
+            }
+
             RentingScreen(currentStep = uiState.currentStep)
+
+            // Show cancel confirmation dialog
+            if (showCancelDialog) {
+                CancelConfirmDialog(
+                    onConfirm = {
+                        viewModel.reset()
+                        navController.popBackStack()
+                        showCancelDialog = false
+                    },
+                    onDismiss = {
+                        showCancelDialog = false
+                    }
+                )
+            }
 
             // Navigate to rented when state changes
             if (uiState.currentState == RentalState.RENTED) {
@@ -105,6 +140,9 @@ fun StrollerRentalApp() {
         }
 
         composable("rented") {
+            LaunchedEffect(Unit) {
+                DemoLogger.logScreenView("rented")
+            }
             RentedScreen(
                 strollerId = uiState.strollerId,
                 startAt = uiState.startAt,
@@ -130,7 +168,31 @@ fun StrollerRentalApp() {
         }
 
         composable("returning") {
+            LaunchedEffect(Unit) {
+                DemoLogger.logScreenView("returning")
+            }
+            var showCancelDialog by remember { mutableStateOf(false) }
+            
+            // Handle back button during returning
+            BackHandler {
+                showCancelDialog = true
+            }
+
             ReturningScreen(currentStep = uiState.currentStep)
+
+            // Show cancel confirmation dialog
+            if (showCancelDialog) {
+                CancelConfirmDialog(
+                    onConfirm = {
+                        viewModel.retryAfterError()
+                        navController.popBackStack()
+                        showCancelDialog = false
+                    },
+                    onDismiss = {
+                        showCancelDialog = false
+                    }
+                )
+            }
 
             // Navigate to returned when state changes
             if (uiState.currentState == RentalState.RETURNED) {
@@ -156,6 +218,9 @@ fun StrollerRentalApp() {
         }
 
         composable("returned") {
+            LaunchedEffect(Unit) {
+                DemoLogger.logScreenView("returned")
+            }
             ReturnedScreen(
                 strollerId = uiState.strollerId,
                 elapsedSec = uiState.elapsedSec,
@@ -169,6 +234,9 @@ fun StrollerRentalApp() {
         }
 
         composable("settings") {
+            LaunchedEffect(Unit) {
+                DemoLogger.logScreenView("settings")
+            }
             SettingsScreen(
                 onNavigateBack = {
                     navController.popBackStack()

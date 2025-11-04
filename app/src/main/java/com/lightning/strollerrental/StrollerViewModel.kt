@@ -58,6 +58,7 @@ class StrollerViewModel : ViewModel() {
     }
 
     fun startRenting() {
+        DemoLogger.logClick("대여하기")
         viewModelScope.launch {
             val delayMs = _uiState.value.stepDelayMs
             val shouldFail = _uiState.value.forceFail
@@ -66,10 +67,12 @@ class StrollerViewModel : ViewModel() {
                 currentState = RentalState.RENTING,
                 currentStep = 0
             )
+            DemoLogger.logFlow(0, "renting")
             
             // Step 1: 유모차와 연결 중...
             delay(delayMs)
             if (shouldFail) {
+                DemoLogger.logFlowError("RENTAL_FAILED", 0)
                 _uiState.value = _uiState.value.copy(
                     currentState = RentalState.ERROR,
                     errorMessage = "연결 실패. 다시 시도해주세요."
@@ -77,10 +80,12 @@ class StrollerViewModel : ViewModel() {
                 return@launch
             }
             _uiState.value = _uiState.value.copy(currentStep = 1)
+            DemoLogger.logFlow(1, "renting")
             
             // Step 2: 사용자 인증 중...
             delay(delayMs)
             if (shouldFail) {
+                DemoLogger.logFlowError("RENTAL_FAILED", 1)
                 _uiState.value = _uiState.value.copy(
                     currentState = RentalState.ERROR,
                     errorMessage = "인증 실패. 다시 시도해주세요."
@@ -88,10 +93,12 @@ class StrollerViewModel : ViewModel() {
                 return@launch
             }
             _uiState.value = _uiState.value.copy(currentStep = 2)
+            DemoLogger.logFlow(2, "renting")
             
             // Step 3: 잠금 장치 해제 중...
             delay(delayMs)
             if (shouldFail) {
+                DemoLogger.logFlowError("RENTAL_FAILED", 2)
                 _uiState.value = _uiState.value.copy(
                     currentState = RentalState.ERROR,
                     errorMessage = "잠금 해제 실패. 다시 시도해주세요."
@@ -99,6 +106,7 @@ class StrollerViewModel : ViewModel() {
                 return@launch
             }
             _uiState.value = _uiState.value.copy(currentStep = 3)
+            DemoLogger.logFlow(3, "renting")
             
             // Step 4: 대여 완료!
             delay(delayMs)
@@ -111,11 +119,13 @@ class StrollerViewModel : ViewModel() {
                 startAt = startTime,
                 elapsedSec = 0
             )
+            DemoLogger.logFlow(4, "renting")
             startElapsedTimer()
         }
     }
 
     fun startReturning() {
+        DemoLogger.logClick("반납하기")
         timerJob?.cancel()
         viewModelScope.launch {
             val delayMs = _uiState.value.stepDelayMs
@@ -125,10 +135,12 @@ class StrollerViewModel : ViewModel() {
                 currentState = RentalState.RETURNING,
                 currentStep = 0
             )
+            DemoLogger.logFlow(0, "returning")
             
             // Step 1: 유모차와 연결 중...
             delay(delayMs)
             if (shouldFail) {
+                DemoLogger.logFlowError("RETURN_FAILED", 0)
                 _uiState.value = _uiState.value.copy(
                     currentState = RentalState.ERROR,
                     errorMessage = "연결 실패. 다시 시도해주세요."
@@ -136,10 +148,12 @@ class StrollerViewModel : ViewModel() {
                 return@launch
             }
             _uiState.value = _uiState.value.copy(currentStep = 1)
+            DemoLogger.logFlow(1, "returning")
             
             // Step 2: 유모차 상태 확인 중...
             delay(delayMs)
             if (shouldFail) {
+                DemoLogger.logFlowError("RETURN_FAILED", 1)
                 _uiState.value = _uiState.value.copy(
                     currentState = RentalState.ERROR,
                     errorMessage = "상태 확인 실패. 다시 시도해주세요."
@@ -147,10 +161,12 @@ class StrollerViewModel : ViewModel() {
                 return@launch
             }
             _uiState.value = _uiState.value.copy(currentStep = 2)
+            DemoLogger.logFlow(2, "returning")
             
             // Step 3: 잠금 장치 잠그는 중...
             delay(delayMs)
             if (shouldFail) {
+                DemoLogger.logFlowError("RETURN_FAILED", 2)
                 _uiState.value = _uiState.value.copy(
                     currentState = RentalState.ERROR,
                     errorMessage = "잠금 실패. 다시 시도해주세요."
@@ -158,6 +174,7 @@ class StrollerViewModel : ViewModel() {
                 return@launch
             }
             _uiState.value = _uiState.value.copy(currentStep = 3)
+            DemoLogger.logFlow(3, "returning")
             
             // Step 4: 반납 완료!
             delay(delayMs)
@@ -165,6 +182,7 @@ class StrollerViewModel : ViewModel() {
                 currentState = RentalState.RETURNED,
                 currentStep = 0
             )
+            DemoLogger.logFlow(4, "returning")
         }
     }
 
