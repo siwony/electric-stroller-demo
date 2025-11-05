@@ -5,5 +5,6 @@ enum class RentalState {
     RENTING,
     RENTED,
     RETURNING,
-    RETURNED
+    RETURNED,
+    ERROR
 }

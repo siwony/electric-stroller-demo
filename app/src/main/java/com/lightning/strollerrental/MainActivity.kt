@@ -2,6 +2,7 @@ package com.lightning.strollerrental
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
@@ -10,9 +11,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -39,52 +42,206 @@ fun StrollerRentalApp() {
     val viewModel: StrollerViewModel = viewModel()
     val uiState by viewModel.uiState.collectAsState()
 
-    // Navigation based on state
-    LaunchedEffect(uiState.currentState) {
-        when (uiState.currentState) {
-            RentalState.IDLE -> navController.navigate("home") {
-                popUpTo("home") { inclusive = true }
-            }
-            RentalState.RENTING -> navController.navigate("renting") {
-                popUpTo("home") { inclusive = true }
-            }
-            RentalState.RENTED -> navController.navigate("rented") {
-                popUpTo("renting") { inclusive = true }
-            }
-            RentalState.RETURNING -> navController.navigate("returning") {
-                popUpTo("rented") { inclusive = true }
-            }
-            RentalState.RETURNED -> {
-                viewModel.reset()
-            }
-        }
-    }
-
     NavHost(
         navController = navController,
-        startDestination = "home"
+        startDestination = if (uiState.showSplash) "splash" else "home"
     ) {
+        composable("splash") {
+            LaunchedEffect(Unit) {
+                DemoLogger.logScreenView("splash")
+            }
+            SplashScreen(
+                onStart = {
+                    viewModel.dismissSplash()
+                    navController.navigate("home") {
+                        popUpTo("splash") { inclusive = true }
+                    }
+                }
+            )
+        }
+
         composable("home") {
+            LaunchedEffect(Unit) {
+                DemoLogger.logScreenView("home")
+            }
             HomeScreen(
                 uiState = uiState,
-                onStartRenting = { viewModel.startRenting() },
+                onStartRenting = {
+                    viewModel.startRenting()
+                    navController.navigate("renting")
+                },
                 onUpdateDelay = { viewModel.updateStepDelay(it) },
-                onToggleForceFail = { viewModel.toggleForceFail() }
+                onToggleForceFail = { viewModel.toggleForceFail() },
+                onNavigateToSettings = { navController.navigate("settings") }
             )
+
+            // Show error dialog if in error state
+            if (uiState.currentState == RentalState.ERROR && uiState.errorMessage != null) {
+                ErrorDialog(
+                    message = uiState.errorMessage!!,
+                    onRetry = {
+                        viewModel.retryAfterError()
+                    },
+                    onDismiss = {
+                        viewModel.retryAfterError()
+                    }
+                )
+            }
         }
 
         composable("renting") {
+            LaunchedEffect(Unit) {
+                DemoLogger.logScreenView("renting")
+            }
+            var showCancelDialog by remember { mutableStateOf(false) }
+            
+            // Handle back button during renting
+            BackHandler {
+                showCancelDialog = true
+            }
+
             RentingScreen(currentStep = uiState.currentStep)
+
+            // Show cancel confirmation dialog
+            if (showCancelDialog) {
+                CancelConfirmDialog(
+                    onConfirm = {
+                        viewModel.reset()
+                        navController.popBackStack()
+                        showCancelDialog = false
+                    },
+                    onDismiss = {
+                        showCancelDialog = false
+                    }
+                )
+            }
+
+            // Navigate to rented when state changes
+            if (uiState.currentState == RentalState.RENTED) {
+                navController.navigate("rented") {
+                    popUpTo("home") { inclusive = false }
+                }
+            }
+
+            // Show error dialog and navigate back
+            if (uiState.currentState == RentalState.ERROR && uiState.errorMessage != null) {
+                ErrorDialog(
+                    message = uiState.errorMessage!!,
+                    onRetry = {
+                        viewModel.retryAfterError()
+                        navController.popBackStack()
+                    },
+                    onDismiss = {
+                        viewModel.retryAfterError()
+                        navController.popBackStack()
+                    }
+                )
+            }
         }
 
         composable("rented") {
+            LaunchedEffect(Unit) {
+                DemoLogger.logScreenView("rented")
+            }
             RentedScreen(
-                onStartReturning = { viewModel.startReturning() }
+                strollerId = uiState.strollerId,
+                startAt = uiState.startAt,
+                elapsedSec = uiState.elapsedSec,
+                onStartReturning = {
+                    viewModel.startReturning()
+                    navController.navigate("returning")
+                }
             )
+
+            // Show error dialog if in error state
+            if (uiState.currentState == RentalState.ERROR && uiState.errorMessage != null) {
+                ErrorDialog(
+                    message = uiState.errorMessage!!,
+                    onRetry = {
+                        viewModel.retryAfterError()
+                    },
+                    onDismiss = {
+                        viewModel.retryAfterError()
+                    }
+                )
+            }
         }
 
         composable("returning") {
-            ReturningScreen()
+            LaunchedEffect(Unit) {
+                DemoLogger.logScreenView("returning")
+            }
+            var showCancelDialog by remember { mutableStateOf(false) }
+            
+            // Handle back button during returning
+            BackHandler {
+                showCancelDialog = true
+            }
+
+            ReturningScreen(currentStep = uiState.currentStep)
+
+            // Show cancel confirmation dialog
+            if (showCancelDialog) {
+                CancelConfirmDialog(
+                    onConfirm = {
+                        viewModel.retryAfterError()
+                        navController.popBackStack()
+                        showCancelDialog = false
+                    },
+                    onDismiss = {
+                        showCancelDialog = false
+                    }
+                )
+            }
+
+            // Navigate to returned when state changes
+            if (uiState.currentState == RentalState.RETURNED) {
+                navController.navigate("returned") {
+                    popUpTo("home") { inclusive = false }
+                }
+            }
+
+            // Show error dialog and navigate back
+            if (uiState.currentState == RentalState.ERROR && uiState.errorMessage != null) {
+                ErrorDialog(
+                    message = uiState.errorMessage!!,
+                    onRetry = {
+                        viewModel.retryAfterError()
+                        navController.popBackStack()
+                    },
+                    onDismiss = {
+                        viewModel.retryAfterError()
+                        navController.popBackStack()
+                    }
+                )
+            }
+        }
+
+        composable("returned") {
+            LaunchedEffect(Unit) {
+                DemoLogger.logScreenView("returned")
+            }
+            ReturnedScreen(
+                strollerId = uiState.strollerId,
+                elapsedSec = uiState.elapsedSec,
+                onGoHome = {
+                    viewModel.reset()
+                    navController.navigate("home") {
+                        popUpTo("home") { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable("settings") {
+            LaunchedEffect(Unit) {
+                DemoLogger.logScreenView("settings")
+            }
+            SettingsScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
         }
     }
 }
